@@ -1,6 +1,8 @@
 {
   "name": "SleepDecoupler: Delta Stimulator",
   "description": "Multisensory app for brain synchronization in the delta rhythm (1 Hz) using binaural beats, stroboscopic light, and haptic feedback.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "bluetooth"
+  ],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
