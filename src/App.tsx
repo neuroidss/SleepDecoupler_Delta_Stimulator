@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Play, Pause, Headphones, Volume2, Activity, Smartphone, Info } from 'lucide-react';
 import { AudioEngine } from './lib/audio';
 
@@ -68,36 +68,16 @@ export default function App() {
     <div className="relative min-h-screen bg-slate-950 text-slate-200 flex flex-col items-center justify-center overflow-hidden font-sans selection:bg-indigo-500/30">
       
       {/* 1Hz Visual Strobe Background - Active only during playback */}
-      <motion.div
-        animate={
-          isPlaying
-            ? { opacity: [0, 0.08, 0] }
-            : { opacity: 0 }
-        }
-        transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-        className="pointer-events-none absolute inset-0 bg-white"
+      <div
+        className={`pointer-events-none absolute inset-0 bg-white ${isPlaying ? 'animate-strobe' : 'opacity-0'}`}
       />
 
       {/* Ambient center glowing orb */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] pointer-events-none">
-        <motion.div
-          animate={
-            isPlaying
-              ? { 
-                  scale: [1, 1.15, 1],
-                  opacity: [0.3, 0.7, 0.3],
-                }
-              : { 
-                  scale: 1, 
-                  opacity: 0.1 
-                }
-          }
-          transition={
-            isPlaying
-              ? { duration: 1, repeat: Infinity, ease: "easeInOut" }
-              : { duration: 0.5 }
-          }
-          className="absolute inset-0 bg-indigo-600 rounded-full blur-[80px] sm:blur-[120px]"
+        <div
+          className={`absolute inset-0 bg-indigo-600 rounded-full blur-[80px] sm:blur-[120px] transition-all duration-500 ease-in-out ${
+            isPlaying ? 'animate-orb-pulse' : 'scale-100 opacity-10'
+          }`}
         />
       </div>
 
