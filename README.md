@@ -57,6 +57,34 @@ To measure this effect using a high-density, ultra-local device like the **FreeE
 
 The imaginary component mathematically ignores zero-lag artifacts (like volume conduction), allowing us to measure true cortical phase-locking and structural rigidity beneath the sensor. The system acts as a closed-loop: it starts stimulation when phase rigidity collapses (fatigue) and stops when 1Hz entrainment is achieved.
 
+### 🌐 Topological Wave Models (8-Channel vs. 16-Channel Arrays)
+The spatial configuration of the local sensor cluster drastically alters our ability to model wave propagation topologies. The system dynamically adapts its physics models based on the detected hardware array (1D ring vs 2D disc):
+
+#### 8-Channel Array (1D Ring Embedded Topology)
+*   **Structure:** 8 electrodes arranged in a single uniform circle (Radius = 10mm).
+*   **Modeling Constraints:** A single ring acts mathematically as a 1-dimensional boundary embedded in 2D space.
+*   **Observable Dynamics:** 
+    *   *Phase Vorticity:* Can perfectly detect phase gradients traveling circumferentially around the ring (rotational spirals).
+    *   *Directional Flow (X/Y):* Can accurately measure a linear gradient sweeping across the array (e.g., from front to back).
+*   **Limitations:** It is physically impossible to detect *Radial Flow* (Source/Sink). The system cannot distinguish whether a wave originated from the center spreading outward, or from outside converging inward, because all sensors lie on the same equipotential radius.
+
+#### 16-Channel Array (2D Concentric Topology)
+*   **Structure:** 16 electrodes arranged in two concentric circles (12 Outer, 4 Inner).
+*   **Modeling Advantages:** The dual-radius design provides true 2D depth, allowing us to compute a complete gradient field ($\nabla \Phi$).
+*   **Observable Dynamics:**
+    *   *Phase Vorticity:* Detects rotational states with higher spatial resolution.
+    *   *Radial Flow (Source/Sink):* **Unlocks the Z-axis equivalent of wave propagation.** By comparing the inner ring's phase to the outer ring's phase, the model mathematically proves whether the cortical patch is generating a wave (Source) or absorbing a wave (Sink). This is crucial for verifying if the induced 1Hz Delta ON/OFF stimulation successfully triggered a localized "down-state" burst that propagated *outward* into the surrounding cortex.
+
+#### The Physical Asymmetry: Off-Center Reference (`AINREF`)
+Both the 8-channel and 16-channel modules utilize an **off-center electrical reference (`AINREF`)**. 
+*   In the 8-channel board, `AINREF` is located at `X: 10, Y: 0`.
+*   In the 16-channel board, `AINREF` is located at `X: 5.5, Y: 0`.
+
+**Why does this matter for modeling?**
+Because EEG relies on differential amplification, every signal we read is actually a physical dipole: $V_i = E_i - E_{ref}$.
+When calculating local spatial gradients (e.g., local Laplacian algorithms), the reference voltage mathematically cancels out: $(E_i - E_{ref}) - (E_j - E_{ref}) = E_i - E_j$. 
+However, when computing global **Phase Locking Values (PLV)**, the position of the reference injects a **spatial bias field** into the data. If the reference is off-center and picks up a massive, global slow wave (like a natural Delta sleep wave), it injects that exact phase into all channels. By strictly mapping the true X/Y coordinates of the `AINREF` and `GND` pins, the simulation engine can apply spatial de-biasing matrices to correct for the asymmetrical equipotential lines across the 26mm patch, isolating true local cortical phase gradients from global reference-injected noise.
+
 ## 📱 The Web App & Cardboard VR Mode
 
 This web application attempts to trigger a similar (though much weaker) effect using the sensory inputs available on a standard smartphone:
