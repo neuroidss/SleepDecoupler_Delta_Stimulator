@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+@theme {
+  --animate-strobe: strobe 1s ease-in-out infinite;
+  --animate-orb-pulse: orb-pulse 1s ease-in-out infinite;
+
+  @keyframes strobe {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.08; }
+  }
+  
+  @keyframes orb-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.15); opacity: 0.7; }
+  }
+}
