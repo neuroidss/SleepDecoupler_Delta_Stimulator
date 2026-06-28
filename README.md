@@ -6,6 +6,10 @@ SleepDecoupler is an open-source, browser-based demonstration of **Audio-Visual 
 
 This application serves as a **free accessible preview** and conceptual introduction to the much more powerful hardware-based **Temporal Interference Transcranial Alternating Current Stimulation (TI-tACS)** technology [DOI: 10.1016/j.cell.2017.05.024].
 
+
+**Live Demo:** 
+- [https://neuroidss.github.io/SleepDecoupler_Delta_Stimulator/](https://neuroidss.github.io/SleepDecoupler_Delta_Stimulator/)
+
 ---
 
 ## 🧬 The Scientific Baseline

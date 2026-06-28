@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/SleepDecoupler_Delta_Stimulator/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
