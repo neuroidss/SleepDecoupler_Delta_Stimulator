@@ -20,7 +20,7 @@ export default function App() {
   const protocolRef = useRef(new SleepDecouplerProtocol());
   const [isClosedLoop, setIsClosedLoop] = useState(false);
   const [protocolState, setProtocolState] = useState(protocolRef.current.state);
-  const [metrics, setMetrics] = useState({ plv1Hz: 0, theta: 0, rigidity: 0 });
+  const [metrics, setMetrics] = useState({ plv1Hz: 0, theta: 0, rigidity: 0, topology: { radial: 0, tq: 0, dir_x: 0, dir_y: 0 } });
   const [isVrMode, setIsVrMode] = useState(false);
   const isPlayingRef = useRef(false);
   const [noiseTolerance, setNoiseTolerance] = useState(true);
@@ -161,7 +161,13 @@ export default function App() {
             setMetrics({
                 plv1Hz: ble.ciPlv1Hz,
                 theta: ble.thetaNoise,
-                rigidity: ble.rigidity
+                rigidity: ble.rigidity,
+                topology: {
+                    radial: ble.delta_radial,
+                    tq: ble.delta_tq,
+                    dir_x: ble.delta_vx,
+                    dir_y: ble.delta_vy
+                }
             });
 
             // Update graph history at ~10Hz
@@ -396,6 +402,21 @@ export default function App() {
                           </div>
                           <div className="text-[9px] text-slate-500 leading-tight">
                             Uncoordinated Theta indicates "local sleep". <em className="text-amber-500/70">Fatigue trigger: &gt; {protocolRef.current.THETA_THRESHOLD}</em>
+                          </div>
+                      </div>
+                      
+                      {/* Metric 4: Topology */}
+                      <div className="flex flex-col space-y-1 mt-6 p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                          <span className="text-cyan-400 font-bold uppercase tracking-wider text-[10px] border-b border-cyan-500/20 pb-1 mb-1">Delta Wave Topology ({BleService.getInstance().numChannels}-Ch)</span>
+                          <div className="flex justify-between items-center text-[9px] text-slate-400">
+                             <span>Radial Flow (Source/Sink):</span>
+                             <span className={metrics.topology.radial > 0 ? "text-emerald-400 font-mono" : "text-rose-400 font-mono"}>
+                                 {metrics.topology.radial > 0 ? 'OUTWARD ⬆' : 'INWARD ⬇'} ({Math.abs(metrics.topology.radial).toFixed(3)})
+                             </span>
+                          </div>
+                          <div className="flex justify-between items-center text-[9px] text-slate-400">
+                             <span>Phase Vorticity (Spirals):</span>
+                             <span className="text-white font-mono">{metrics.topology.tq.toFixed(3)}</span>
                           </div>
                       </div>
                       

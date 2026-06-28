@@ -57,6 +57,61 @@ export class BleService {
     public rigidity = 1.0;
     public thetaNoise = 0;
     
+    public delta_vx = 0;
+    public delta_vy = 0;
+    public delta_tq = 0;
+    public delta_radial = 0;
+
+    public get electrodes() {
+        if (this.numChannels === 8) {
+            return [
+                { x: 3.09, y: 9.51 },
+                { x: 8.1, y: 5.89 },
+                { x: 8.09, y: -5.88 },
+                { x: 3.1, y: -9.51 },
+                { x: -3.09, y: -9.5 },
+                { x: -8.08, y: -5.87 },
+                { x: -8.09, y: 5.89 },
+                { x: -3.1, y: 9.51 }
+            ];
+        } else {
+            return [
+                { x: 10.14, y: -2.72 },
+                { x: 7.43, y: -7.43 },
+                { x: 2.75, y: -4.77 },
+                { x: 2.72, y: -10.15 },
+                { x: -2.72, y: -10.14 },
+                { x: -2.75, y: -4.77 },
+                { x: -7.42, y: -7.42 },
+                { x: -10.14, y: -2.73 },
+                { x: -10.14, y: 2.72 },
+                { x: -7.43, y: 7.43 },
+                { x: -2.75, y: 4.76 },
+                { x: -2.72, y: 10.14 },
+                { x: 2.72, y: 10.15 },
+                { x: 2.75, y: 4.77 },
+                { x: 7.43, y: 7.42 },
+                { x: 10.14, y: 2.71 }
+            ];
+        }
+    }
+    
+    public get referenceElectrode() {
+        if (this.numChannels === 8) {
+            return { x: 10, y: 0 };
+        } else {
+            return { x: 5.5, y: 0 };
+        }
+    }
+    
+    public get groundElectrode() {
+        if (this.numChannels === 8) {
+            return { x: -10, y: 0 };
+        } else {
+            return { x: -5.49, y: 0 };
+        }
+    }
+
     private lastEegProcess = 0;
     
     private constructor() {
@@ -120,6 +175,8 @@ export class BleService {
             let sum1Hz = 0;
             let sumTheta = 0;
             
+            let d_vx = 0, d_vy = 0, d_tq = 0, d_rad = 0;
+            
             for(let i=0; i<this.numChannels; i++) {
                 for(let j=i+1; j<this.numChannels; j++) {
                     let val1Hz = this.get_band_ciPLV(i, j, 1, 1);
@@ -134,12 +191,42 @@ export class BleService {
                     normFutureSq += valFuture * valFuture;
                     dotProduct += valPast * valFuture;
                     
+                    if (this.electrodes[i] && this.electrodes[j]) {
+                        // Base topological gradient vectors
+                        let dx = this.electrodes[j].x - this.electrodes[i].x;
+                        let dy = this.electrodes[j].y - this.electrodes[i].y;
+                        
+                        // Reference De-Biasing Matrix (spatial correction)
+                        // EEG signals are physical dipoles relative to the AINREF pin.
+                        // Off-center references inject spatial bias fields into PLV calculations.
+                        const ref = this.referenceElectrode;
+                        let dist_i_ref = Math.sqrt(Math.pow(this.electrodes[i].x - ref.x, 2) + Math.pow(this.electrodes[i].y - ref.y, 2));
+                        let dist_j_ref = Math.sqrt(Math.pow(this.electrodes[j].x - ref.x, 2) + Math.pow(this.electrodes[j].y - ref.y, 2));
+                        
+                        // Compensation factor: weights gradients higher if they are further from the reference,
+                        // countering the volume conduction "pull" of the reference itself.
+                        let refDebiasWeight = 1.0 + (dist_i_ref + dist_j_ref) / (this.numChannels === 8 ? 20.0 : 40.0);
+                        
+                        d_vx += val1Hz * dx * refDebiasWeight;
+                        d_vy += val1Hz * dy * refDebiasWeight;
+                        d_tq += (val1Hz * (this.electrodes[i].x * dy - this.electrodes[i].y * dx)) / 100 * refDebiasWeight;
+                        
+                        let r_i = Math.sqrt(this.electrodes[i].x**2 + this.electrodes[i].y**2);
+                        let r_j = Math.sqrt(this.electrodes[j].x**2 + this.electrodes[j].y**2);
+                        d_rad += val1Hz * (r_j - r_i) * refDebiasWeight;
+                    }
+                    
                     pairIdx++;
                 }
             }
             
             this.ciPlv1Hz = sum1Hz / Math.max(1, pairIdx);
             this.thetaNoise = sumTheta / Math.max(1, pairIdx);
+            
+            this.delta_vx = d_vx / Math.max(1, pairIdx);
+            this.delta_vy = d_vy / Math.max(1, pairIdx);
+            this.delta_tq = d_tq / Math.max(1, pairIdx);
+            this.delta_radial = d_rad / Math.max(1, pairIdx);
             
             if (normPastSq > 0.001 && normFutureSq > 0.001) {
                 this.rigidity = Math.max(0, dotProduct / (Math.sqrt(normPastSq) * Math.sqrt(normFutureSq)));
