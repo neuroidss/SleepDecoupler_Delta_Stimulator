@@ -20,13 +20,42 @@ In 2026, researchers demonstrated that the restorative functions of sleep are no
 > **Source:** Driessen, K., Squarcio, F., Tononi, G., & Cirelli, C. (2026). *Nature Neuroscience*. 
 > **DOI:** [10.1038/s41593-026-02318-9](https://doi.org/10.1038/s41593-026-02318-9)
 
-### Why target Working Memory?
-Sleep deprivation severely degrades **Working Memory (WM)**. According to the **Working Memory 2.0** model [DOI: 10.1016/j.neuron.2018.09.023], WM is maintained not by persistent spiking, but by sparse, coordinated bursts of Gamma (30-100Hz) regulated by deeper Alpha/Beta (10-30Hz) rhythms. Without sleep, this delicate "push-pull" dynamic breaks down into chaotic noise, and phase-amplitude coupling with Theta rhythms collapses.
+### 🔬 Deep Research: Computational Model of Working Memory & Sleep
+To understand *why* we must induce these states, we model the cortex based on the **Working Memory 2.0** framework.
 
-By artificially inducing these 1 Hz Delta ON/OFF periods, scientists were able to rapidly "reset" the synapses, completely reversing the cognitive damage of sleep deprivation without the subjects ever falling asleep. 
+> **Source:** Miller, E. K., Lundqvist, M., & Bastos, A. M. (2018). *Working Memory 2.0*. *Neuron*, 100(2), 463-475.
+> **DOI:** [10.1016/j.neuron.2018.09.023](https://doi.org/10.1016/j.neuron.2018.09.023)
+
+Working Memory (WM) is not maintained by continuous, persistent spiking (which is metabolically expensive and prone to interference). Instead, it relies on a delicate **Push-Pull Dynamic**:
+*   **Deep Layers (Alpha/Beta 10-30Hz):** Act as the "brakes" (top-down executive control).
+*   **Superficial Layers (Gamma 30-100Hz):** Act as the "gas" (bottom-up sensory information). Information is held in brief, sparse *Gamma bursts*.
+
+Using a system of coupled non-linear oscillators (e.g., Kuramoto-Feigenbaum equations), we can predict the state of the cortex under various conditions:
+
+#### 1. The Core Problem: Synaptic Fatigue (Worst-case Sleep Deprivation)
+*   **The Model:** Extended wakefulness saturates synaptic weights. The deep-layer Beta rhythms lose their inhibitory power, causing superficial Gamma bursts to bleed together into a continuous, chaotic noise floor. The cortex loses its ability to multiplex information.
+*   **FreeEEG16 Observables:** 
+    *   **Phase Rigidity** (the cosine similarity between past and future Gamma phase vectors) collapses below `0.40`. 
+    *   **Theta Entropy** (4-7Hz) rises as uncoordinated, exhausted micro-columns fall into local, asynchronous "micro-sleeps".
+
+#### 2. The Natural Solution: Slow-Wave Sleep (Best-case Recovery)
+*   **The Model:** During natural NREM sleep, the brain generates massive, global 1-4 Hz Delta waves. These are literal ON/OFF periods. When the network goes "OFF", neurons are forced into silence, allowing metabolic clearance and the downscaling of saturated synapses (Synaptic Homeostasis Hypothesis).
+*   **FreeEEG16 Observables:** Phase Rigidity resets to `>0.80`. Chaotic Theta noise is completely suppressed.
+
+#### 3. Our Solution: Artificial ON/OFF Induction (Awake Stimulation)
+If we can artificially force the local cortex into 1 Hz ON/OFF periods while the user is awake, we can "decouple" the synaptic reset from the loss of consciousness.
+
+*   **Binaural Beats (Audio-only):** *Efficiency: ~1%.* Entrains the auditory cortex, which weakly pulls the global network. Requires >45 minutes. (This is the most subtle, non-invasive method, often used as a baseline).
+*   **Stroboscopic Light (Visual VR):** *Efficiency: ~15%.* The optic nerve powerfully drives the occipital and parietal cortices (Photic Driving). Using VR with *closed eyes* diffuses the light to prevent discomfort/seizures while maintaining massive cortical driving. Can achieve local reset in ~15 minutes.
+*   **Free-tACS / Temporal Interference (Invasive/Electrical):** *Efficiency: >90%.* Direct intervention. By crossing high-frequency electrical fields, we force the local 26mm cluster into 1Hz ON/OFF periods directly, bypassing sensory bottlenecks entirely.
 
 ### FreeEEG16 & ciPLV Validation
-To measure this effect using a high-density, ultra-local device like the **FreeEEG16** (a 26mm sensor lacking a distant reference and prone to volume conduction), this system relies on the **Continuous Imaginary Phase-Locking Value (ciPLV)** [arXiv:1710.08037]. The imaginary component mathematically ignores zero-lag artifacts (like volume conduction), allowing us to measure true cortical phase-locking and structural rigidity beneath the sensor. The system acts as a closed-loop: it starts stimulation when phase rigidity collapses (fatigue) and stops when 1Hz entrainment is achieved.
+To measure this effect using a high-density, ultra-local device like the **FreeEEG16** (a 26mm sensor lacking a distant reference and prone to volume conduction), this system relies on the **Continuous Imaginary Phase-Locking Value (ciPLV)**.
+
+> **Source:** Bruña, R., Maestú, F., & Pereda, E. (2018). *Phase Locking Value revisited: teaching new tricks to an old dog*. *Journal of Neural Engineering*.
+> **arXiv:** [1710.08037](https://arxiv.org/abs/1710.08037)
+
+The imaginary component mathematically ignores zero-lag artifacts (like volume conduction), allowing us to measure true cortical phase-locking and structural rigidity beneath the sensor. The system acts as a closed-loop: it starts stimulation when phase rigidity collapses (fatigue) and stops when 1Hz entrainment is achieved.
 
 ## 📱 The Web App & Cardboard VR Mode
 
