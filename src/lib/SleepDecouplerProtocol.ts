@@ -16,23 +16,25 @@ export class SleepDecouplerProtocol {
     
     // Control flags for UI
     public isStimulationActive = false;
+    public robustMode = true; // Noise tolerance / artifact rejection
     
     private smooth1Hz = 0;
     private smoothTheta = 0;
     private smoothRigidity = 1.0;
     
-    public holdProgress = 0; // 0 to 1 for the 3-minute hold
+    public holdProgress = 0; // 0 to 1 for the required hold
     
-    // Config thresholds
-    private readonly THETA_THRESHOLD = 0.5; // Baseline high theta noise
-    private readonly RIGIDITY_COLLAPSE = 0.4; // Collapsed rigidity
-    private readonly CIPL_1HZ_TARGET = 0.85; // Target entrainment
-    private readonly RIGIDITY_RESTORED = 0.8; // Target restoration
+    // Config thresholds - EXPOSED FOR UI GRAPHING
+    public readonly THETA_THRESHOLD = 0.4; // Lowered: Baseline high theta noise threshold
+    public readonly RIGIDITY_COLLAPSE = 0.5; // Raised: Collapsed rigidity threshold
+    public readonly CIPL_1HZ_TARGET = 0.85; // Target entrainment
+    public readonly RIGIDITY_RESTORED = 0.8; // Target restoration
     
-    private readonly SCAN_TIME = 30; // 30s baseline
-    private readonly HOLD_TIME = 180; // 3 mins required hold
-    private readonly VALIDATE_TIME = 60; // 60s post-stimulus dark check
-    private readonly MAX_SESSION_TIME = 900; // 15 mins max stimulation
+    // Timings - SPED UP FOR FASTER REAL-TIME FEEDBACK
+    public readonly SCAN_TIME = 10; // 10s baseline (was 30s)
+    public readonly HOLD_TIME = 60; // 1 min required hold to prove entrainment (was 3m)
+    public readonly VALIDATE_TIME = 15; // 15s post-stimulus dark check (was 60s)
+    public readonly MAX_SESSION_TIME = 300; // 5 mins max stimulation (was 15m)
 
     public update(dt: number) {
         const ble = BleService.getInstance();
@@ -42,14 +44,16 @@ export class SleepDecouplerProtocol {
             return;
         }
         
-        // Smoothing incoming metrics
-        this.smooth1Hz = this.smooth1Hz * 0.95 + ble.ciPlv1Hz * 0.05;
-        this.smoothTheta = this.smoothTheta * 0.95 + ble.thetaNoise * 0.05;
-        this.smoothRigidity = this.smoothRigidity * 0.95 + ble.rigidity * 0.05;
+        // Smoothing incoming metrics with noise tolerance option
+        const alpha = this.robustMode ? 0.01 : 0.05;
+        this.smooth1Hz = this.smooth1Hz * (1 - alpha) + ble.ciPlv1Hz * alpha;
+        this.smoothTheta = this.smoothTheta * (1 - alpha) + ble.thetaNoise * alpha;
+        this.smoothRigidity = this.smoothRigidity * (1 - alpha) + ble.rigidity * alpha;
         
         if (this.state === 'IDLE') {
             this.state = 'SCANNING';
             this.timeInState = 0;
+            this.isStimulationActive = false; // explicitly mute during scan
         }
         
         this.timeInState += dt;
@@ -62,8 +66,8 @@ export class SleepDecouplerProtocol {
                     this.baseRigidity = this.smoothRigidity;
                     
                     // Trigger condition: high theta noise AND collapsed rigidity
-                    // Added a fail-safe so users with clean brains can still test it after 60s
-                    if ((this.smoothTheta > this.THETA_THRESHOLD && this.smoothRigidity < this.RIGIDITY_COLLAPSE) || this.timeInState > 60) {
+                    // Fallback to 15s (if brain is healthy, test anyway for demo purposes)
+                    if ((this.smoothTheta > this.THETA_THRESHOLD && this.smoothRigidity < this.RIGIDITY_COLLAPSE) || this.timeInState > 15) {
                         this.state = 'STIMULATING';
                         this.timeInState = 0;
                         this.isStimulationActive = true;
@@ -83,11 +87,11 @@ export class SleepDecouplerProtocol {
                     this.holdProgress = Math.max(0, this.holdProgress - (dt / this.HOLD_TIME) * 0.2);
                 }
                 
-                // Complete if hold is fulfilled, or hit the 15 min max duration
+                // Complete if hold is fulfilled, or hit the max duration
                 if (this.holdProgress >= 1.0 || this.timeInState > this.MAX_SESSION_TIME) {
                     this.state = 'VALIDATING';
                     this.timeInState = 0;
-                    this.isStimulationActive = false;
+                    this.isStimulationActive = false; // MUTE for post-check
                     this.holdProgress = 0;
                 }
                 break;
